@@ -5,10 +5,7 @@ defaults:
     working-directory: core/mybatis-generator-core
 
 on:
-  push:
-    branches:
-      - master
-
+  workflow_dispatch:
 permissions: read-all
 
 concurrency:
@@ -21,8 +18,8 @@ env:
 
 jobs:
   build:
-    if: github.repository_owner == 'mybatis'
-    runs-on: ubuntu-latest
+    if: always()
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -40,7 +37,17 @@ jobs:
       - name: Analyze with SonarCloud
         # Note: the mvnw executable is in the parent directory - not this working directory. We only do sonar on the
         # core project, not all the test projects.
-        run: ../mvnw verify jacoco:report sonar:sonar --batch-mode --no-transfer-progress --show-version -Dlicense.skip=true -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=${{ env.SONAR_ORGANIZATION }} -Dsonar.projectKey=${{ env.SONAR_ORGANIZATION }}_${{ env.SONAR_PROJECT_KEY }} -Dsonar.scanner.skipJreProvisioning=true -Dsonar.token=${{ env.SONAR_TOKEN }}
+        run: ../mvnw verify jacoco:report sonar:sonar --batch-mode --no-transfer-progress --show-version 
+          -Dlicense.skip=true -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=${{ env.SONAR_ORGANIZATION }} 
+          -Dsonar.projectKey=${{ env.SONAR_ORGANIZATION }}_${{ env.SONAR_PROJECT_KEY }} 
+          -Dsonar.scanner.skipJreProvisioning=true -Dsonar.token=${{ env.SONAR_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+      fail-fast: false
