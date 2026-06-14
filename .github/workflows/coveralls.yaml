@@ -27,9 +27,11 @@ jobs:
           distribution: temurin
           java-version: 25
       - name: Run the build
+        shell: bash
         run: ./mvnw install --batch-mode --no-transfer-progress --quiet --show-version -Dlicense.skip=true
       - name: Report Coverage to Coveralls for Pull Requests
         if: always()
+        shell: bash
         run: ./mvnw generate-sources jacoco:report coveralls:report --batch-mode --no-transfer-progress 
           -DpullRequest=${{ env.PR_NUMBER }} -DrepoToken=${{ env.GITHUB_TOKEN }} -DserviceName=github
         env:
@@ -37,6 +39,7 @@ jobs:
           PR_NUMBER: ${{ github.event.number }}
       - name: Report Coverage to Coveralls for General Push
         if: always()
+        shell: bash
         run: ./mvnw generate-sources jacoco:report coveralls:report --batch-mode --no-transfer-progress -DrepoToken=${{ 
           env.GITHUB_TOKEN }} -DserviceName=github
         env:
