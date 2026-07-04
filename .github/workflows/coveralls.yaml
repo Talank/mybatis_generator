@@ -4,7 +4,8 @@ defaults:
   run:
     working-directory: core
 
-on: [push, pull_request]
+on:
+  workflow_dispatch:
 
 permissions: read-all
 
@@ -14,8 +15,8 @@ concurrency:
 
 jobs:
   coveralls:
-    if: github.repository_owner == 'mybatis'
-    runs-on: ubuntu-latest
+    if: always()
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -28,13 +29,21 @@ jobs:
       - name: Run the build
         run: ./mvnw install --batch-mode --no-transfer-progress --quiet --show-version -Dlicense.skip=true
       - name: Report Coverage to Coveralls for Pull Requests
-        if: github.event_name == 'pull_request'
-        run: ./mvnw generate-sources jacoco:report coveralls:report --batch-mode --no-transfer-progress -DpullRequest=${{ env.PR_NUMBER }} -DrepoToken=${{ env.GITHUB_TOKEN }} -DserviceName=github
+        if: always()
+        run: ./mvnw generate-sources jacoco:report coveralls:report --batch-mode --no-transfer-progress 
+          -DpullRequest=${{ env.PR_NUMBER }} -DrepoToken=${{ env.GITHUB_TOKEN }} -DserviceName=github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.number }}
       - name: Report Coverage to Coveralls for General Push
-        if: github.event_name == 'push'
-        run: ./mvnw generate-sources jacoco:report coveralls:report --batch-mode --no-transfer-progress -DrepoToken=${{ env.GITHUB_TOKEN }} -DserviceName=github
+        if: always()
+        run: ./mvnw generate-sources jacoco:report coveralls:report --batch-mode --no-transfer-progress -DrepoToken=${{ 
+          env.GITHUB_TOKEN }} -DserviceName=github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+      fail-fast: false
